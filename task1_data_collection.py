@@ -4,9 +4,11 @@ import time
 import requests
 from datetime import datetime
 
+# hacker news api base url
 URL = "https://hacker-news.firebaseio.com/v0"
 HEADERS = {"User-Agent": "TrendPulse/1.0"}
 
+# keywords for each category to match with story titles
 CATEGORIES = {
     "technology":    ["ai", "software", "tech", "code", "computer", "data", "cloud", "api", "gpu", "llm"],
     "worldnews":     ["war", "government", "country", "president", "election", "climate", "attack", "global"],
@@ -15,6 +17,7 @@ CATEGORIES = {
     "entertainment": ["movie", "film", "music", "netflix", "game", "book", "show", "award", "streaming"],
 }
 
+# this function checks the title and returns matching category
 def find_category(title):
     t = title.lower()
     for cat, keywords in CATEGORIES.items():
@@ -23,6 +26,7 @@ def find_category(title):
                 return cat
     return None
 
+# this function gets top 500 story ids from hacker news
 def fetch_ids():
     try:
         r = requests.get(f"{URL}/topstories.json", headers=HEADERS, timeout=10)
@@ -32,6 +36,7 @@ def fetch_ids():
         print(f"something went wrong while fetching ids: {e}")
         return []
 
+# this function grab details of a single story using its id
 def load_story(sid):
     try:
         r = requests.get(f"{URL}/item/{sid}.json", headers=HEADERS, timeout=10)
@@ -39,15 +44,16 @@ def load_story(sid):
     except Exception as e:
         print(f"something went wrong with {sid}, skipping")
         return None
-
 print("starting script...")
 
+# get all ids first
 story_ids = fetch_ids()
 print(f"got {len(story_ids)} story ids")
 
 all_stories = []
 now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+# loop through each category and collect up to 25 stories
 for category in CATEGORIES:
     count = 0
     print(f"\nlooking for {category} stories...")
@@ -68,6 +74,7 @@ for category in CATEGORIES:
         if find_category(title) != category:
             continue
 
+ # save all 7 required fields
         all_stories.append({
             "post_id":      story.get("id"),
             "title":        title,
@@ -83,6 +90,7 @@ for category in CATEGORIES:
 
     time.sleep(2)
 
+# create data folder if it doesnt exist and save file
 os.makedirs("data", exist_ok=True)
 filename = f"data/trends_{datetime.now().strftime('%Y%m%d')}.json"
 
